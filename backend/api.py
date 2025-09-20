@@ -10,7 +10,9 @@ import os
 import json
 from pathlib import Path
 
-
+"""
+have to build : frontend, some minor features in backend ( 21/9 ) 
+"""
 
 app = FastAPI()
 
