@@ -8,26 +8,52 @@ import { ProcessingResult } from "@/components/processing-result"
 import { GalleryShowcase } from "@/components/gallery-showcase"
 
 export interface VideoParams {
-  fps: number
+  fps: number | null
   life_frames: number
   pts_per_beat: number
+  ambient_rate: number
+  jitter_px: number
   min_size: number
   max_size: number
+  neighbor_links: number
+  orb_fast_threshold: number
+  bell_width: number
+  seed: number | null
+}
+
+interface ProcessResult {
+  success?: boolean
+  message?: string
+  process_id?: string
+  filename?: string
+  original_filename?: string
+  file_size?: number
+  preview_url?: string
+  download_url?: string
+  error?: string
 }
 
 const defaultParams: VideoParams = {
   fps: 30,
   life_frames: 120,
-  pts_per_beat: 4,
-  min_size: 10,
-  max_size: 100,
+  pts_per_beat: 20,
+  ambient_rate: 5.0,
+  jitter_px: 0.5,
+  min_size: 15,
+  max_size: 40,
+  neighbor_links: 3,
+  orb_fast_threshold: 20,
+  bell_width: 4.0,
+  seed: null
 }
 
 export default function VideoProcessor() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [params, setParams] = useState<VideoParams>(defaultParams)
   const [isProcessing, setIsProcessing] = useState(false)
-  const [result, setResult] = useState<{ downloadUrl?: string; error?: string } | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [result, setResult] = useState<ProcessResult | null>(null)
 
   const handleProcess = async () => {
     if (!selectedFile) return
@@ -38,29 +64,138 @@ export default function VideoProcessor() {
     try {
       const formData = new FormData()
       formData.append("file", selectedFile)
+      formData.append("params", JSON.stringify(params))
 
-      // Add parameters as JSON fields
-      Object.entries(params).forEach(([key, value]) => {
-        formData.append(key, value.toString())
-      })
+      console.log("Processing video:", selectedFile.name)
+      console.log("Parameters:", params)
 
-      const response = await fetch("/process", {
-        method: "POST",
-        body: formData,
-      })
-
-      if (!response.ok) {
-        throw new Error(`Processing failed: ${response.statusText}`)
+      try {
+        const healthCheck = await fetch("http://localhost:8000/", {
+          method: "GET",
+          mode: 'cors',
+        })
+        
+        if (!healthCheck.ok) {
+          throw new Error("Server is not responding")
+        }
+        console.log("Server is reachable")
+      } catch (serverError) {
+        throw new Error("Cannot connect to server. Make sure the FastAPI server is running on port 8000")
       }
 
-      const blob = await response.blob()
-      const downloadUrl = URL.createObjectURL(blob)
-      setResult({ downloadUrl })
+      const response = await fetch("http://localhost:8000/process", {
+        method: "POST",
+        body: formData,
+        mode: 'cors',
+      })
+
+      console.log("Response status:", response.status)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Processing failed: ${response.status} - ${errorText}`)
+      }
+
+      // Parse JSON response with process info
+      const processResult = await response.json()
+      console.log("Process result:", processResult)
+
+      if (processResult.success && processResult.process_id) {
+        setResult(processResult)
+      } else {
+        throw new Error(processResult.message || "Processing failed")
+      }
+      
     } catch (error) {
-      setResult({ error: error instanceof Error ? error.message : "Processing failed" })
+      console.error("Processing error:", error)
+      setResult({ 
+        error: error instanceof Error ? error.message : "Processing failed" 
+      })
     } finally {
       setIsProcessing(false)
     }
+  }
+
+  const handleDownload = async () => {
+    if (!result?.process_id) return
+
+    setIsDownloading(true)
+
+    try {
+      console.log("Downloading file with process_id:", result.process_id)
+
+      const response = await fetch(`http://localhost:8000/download/${result.process_id}`, {
+        method: "GET",
+        mode: 'cors',
+      })
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        throw new Error(`Download failed: ${response.status} - ${errorText}`)
+      }
+
+      const blob = await response.blob()
+      console.log("Downloaded blob size:", blob.size)
+
+      const downloadUrl = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = downloadUrl
+      a.download = result.filename || 'processed_video.mp4'
+      a.style.display = 'none'
+      document.body.appendChild(a)
+      a.click()
+      
+      setTimeout(() => {
+        document.body.removeChild(a)
+        URL.revokeObjectURL(downloadUrl)
+      }, 1000)
+
+      console.log("Download completed successfully")
+      
+    } catch (error) {
+      console.error("Download error:", error)
+      setResult({ 
+        ...result,
+        error: error instanceof Error ? error.message : "Download failed" 
+      })
+    } finally {
+      setIsDownloading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    if (!result?.process_id) return
+
+    setIsDeleting(true)
+
+    try {
+      const response = await fetch(`http://localhost:8000/delete/${result.process_id}`, {
+        method: "DELETE",
+        mode: 'cors',
+      })
+
+      if (response.ok) {
+        setResult(null) // Clear the result completely
+        console.log("File deleted successfully")
+      } else {
+        const errorText = await response.text()
+        console.error("Delete failed:", response.status, errorText)
+        throw new Error(`Delete failed: ${response.status}`)
+      }
+    } catch (error) {
+      console.error("Delete error:", error)
+      setResult({ 
+        ...result,
+        error: error instanceof Error ? error.message : "Failed to delete file" 
+      })
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const getPreviewUrl = () => {
+    if (!result?.process_id) return undefined
+    return `http://localhost:8000/preview/${result.process_id}`
   }
 
   return (
@@ -70,19 +205,19 @@ export default function VideoProcessor() {
         <div className="container mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-semibold text-foreground">Video Processor</h1>
+              <h1 className="text-2xl font-semibold text-foreground">Aether :/ </h1>
               <p className="text-sm text-muted-foreground mt-1">
-                Upload and process your videos with custom parameters
+                Apply Rhythm-based visual effects to your videos - Preview & Download
               </p>
             </div>
             <a
-              href="https://github.com/yourusername/video-processor"
+              href="https://github.com/manthanawgan/Aether"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground transition-colors rounded-md hover:bg-muted"
             >
               <Github className="w-5 h-5" />
-              <span className="hidden sm:inline">Repository</span>
+              <span className="hidden sm:inline">Github</span>
             </a>
           </div>
         </div>
@@ -101,7 +236,16 @@ export default function VideoProcessor() {
             />
 
             {result && (
-              <ProcessingResult downloadUrl={result.downloadUrl} error={result.error} filename={selectedFile?.name} />
+              <ProcessingResult 
+                error={result.error}
+                filename={selectedFile?.name}
+                processResult={result}
+                onDownload={handleDownload}
+                onDelete={handleDelete}
+                isDownloading={isDownloading}
+                isDeleting={isDeleting}
+                previewUrl={getPreviewUrl()}
+              />
             )}
           </div>
 
