@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form
 from fastapi.responses import StreamingResponse, FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from models import Params
-from main import render_tracked_effect
+from .main import render_tracked_effect
 
 import uuid
 import os
