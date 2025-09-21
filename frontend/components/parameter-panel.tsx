@@ -12,7 +12,7 @@ interface ParameterPanelProps {
 }
 
 export function ParameterPanel({ params, onParamsChange }: ParameterPanelProps) {
-  const updateParam = (key: keyof VideoParams, value: number) => {
+  const updateParam = (key: keyof VideoParams, value: number | null) => {
     onParamsChange({
       ...params,
       [key]: value,
@@ -37,13 +37,13 @@ export function ParameterPanel({ params, onParamsChange }: ParameterPanelProps) 
               min={15}
               max={120}
               step={1}
-              value={[params.fps]}
+              value={[params.fps ?? 30]}
               onValueChange={(value) => updateParam("fps", value[0])}
               className="w-full"
             />
             <div className="flex justify-between text-xs text-muted-foreground">
               <span>15</span>
-              <span className="font-medium">{params.fps} FPS</span>
+              <span className="font-medium">{params.fps ?? 30} FPS</span>
               <span>120</span>
             </div>
           </div>
