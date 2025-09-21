@@ -47,6 +47,12 @@ const defaultParams: VideoParams = {
   seed: null
 }
 
+const API_BASE_URL = process.env.NODE_ENV === 'production'
+  ? 'https://aether-rhythm.onrender.com'
+  : 'http://localhost:8000'
+
+
+
 export default function VideoProcessor() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [params, setParams] = useState<VideoParams>(defaultParams)
@@ -70,7 +76,7 @@ export default function VideoProcessor() {
       console.log("Parameters:", params)
 
       try {
-        const healthCheck = await fetch("http://localhost:8000/", {
+        const healthCheck = await fetch(`${API_BASE_URL}/`, {
           method: "GET",
           mode: 'cors',
         })
@@ -83,7 +89,7 @@ export default function VideoProcessor() {
         throw new Error("Cannot connect to server. Make sure the FastAPI server is running on port 8000")
       }
 
-      const response = await fetch("http://localhost:8000/process", {
+      const response = await fetch(`${API_BASE_URL}/`, {
         method: "POST",
         body: formData,
         mode: 'cors',
@@ -124,7 +130,7 @@ export default function VideoProcessor() {
     try {
       console.log("Downloading file with process_id:", result.process_id)
 
-      const response = await fetch(`http://localhost:8000/download/${result.process_id}`, {
+      const response = await fetch(`${API_BASE_URL}/download/${result.process_id}`, {
         method: "GET",
         mode: 'cors',
       })
@@ -169,7 +175,7 @@ export default function VideoProcessor() {
     setIsDeleting(true)
 
     try {
-      const response = await fetch(`http://localhost:8000/delete/${result.process_id}`, {
+      const response = await fetch(`${API_BASE_URL}/delete/${result.process_id}`, {
         method: "DELETE",
         mode: 'cors',
       })
@@ -193,9 +199,9 @@ export default function VideoProcessor() {
     }
   }
 
-  const getPreviewUrl = () => {
+  const   viewUrl = () => {
     if (!result?.process_id) return undefined
-    return `http://localhost:8000/preview/${result.process_id}`
+    return `${API_BASE_URL}/preview/${result.process_id}`
   }
 
   return (
