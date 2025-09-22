@@ -4,9 +4,10 @@ python-multipart==0.0.12
 pydantic==2.10.3
 opencv-python-headless==4.10.0.84
 librosa==0.10.2
-moviepy==2.1.1
+moviepy==1.0.3
 numpy==1.26.4
 setuptools==75.6.0
 wheel==0.45.1
 scipy==1.14.1
 soundfile==0.12.1
+sounddevice>=0.4 
