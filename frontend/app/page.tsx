@@ -51,8 +51,6 @@ const API_BASE_URL = process.env.NODE_ENV === 'production'
   ? 'https://aether-rhythm.onrender.com'
   : 'http://localhost:8000'
 
-
-
 export default function VideoProcessor() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
   const [params, setParams] = useState<VideoParams>(defaultParams)
@@ -102,7 +100,6 @@ export default function VideoProcessor() {
         throw new Error(`Processing failed: ${response.status} - ${errorText}`)
       }
 
-      // Parse JSON response with process info
       const processResult = await response.json()
       console.log("Process result:", processResult)
 
@@ -199,7 +196,7 @@ export default function VideoProcessor() {
     }
   }
 
-  const   viewUrl = () => {
+  const getPreviewUrl = () => {
     if (!result?.process_id) return undefined
     return `${API_BASE_URL}/preview/${result.process_id}`
   }
