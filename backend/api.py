@@ -20,10 +20,11 @@ app.add_middleware(
     allow_origins=[
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
-        "https://aether-rhythm.vercel.app"
+        "https://aether-rhythm.vercel.app",
+        "https://aether-e3xe.onrender.com",
     ],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
     allow_headers=["*"]
 )
 
@@ -277,3 +278,9 @@ async def cleanup_on_shutdown():
                 file_path.unlink()
             except Exception as e:
                 print(f"Error cleaning up {file_path} during shutdown: {e}")
+
+
+if __name__ == "__main__":
+    import uvicorn
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run(app, host="0.0.0.0", port=port)

@@ -48,7 +48,7 @@ const defaultParams: VideoParams = {
 }
 
 const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://aether-rhythm.onrender.com'
+  ? 'https://aether-e3xe.onrender.com'
   : 'http://localhost:8000'
 
 export default function VideoProcessor() {
@@ -87,7 +87,7 @@ export default function VideoProcessor() {
         throw new Error("Cannot connect to server. Make sure the FastAPI server is running on port 8000")
       }
 
-      const response = await fetch(`${API_BASE_URL}/`, {
+      const response = await fetch(`${API_BASE_URL}/process`, {
         method: "POST",
         body: formData,
         mode: 'cors',
