@@ -21,7 +21,7 @@ app.add_middleware(
         "http://localhost:3000", 
         "http://127.0.0.1:3000",
         "https://aether-rhythm.vercel.app",
-        "https://aether-e3xe.onrender.com",
+        "https://aether-rhythm.onrender.com",
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "DELETE", "OPTIONS", "HEAD"],

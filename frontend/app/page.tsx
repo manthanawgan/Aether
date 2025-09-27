@@ -47,9 +47,11 @@ const defaultParams: VideoParams = {
   seed: null
 }
 
-const API_BASE_URL = process.env.NODE_ENV === 'production'
-  ? 'https://aether-e3xe.onrender.com'
-  : 'http://localhost:8000'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 
+  (process.env.NODE_ENV === 'production'
+    ? 'https://aether-rhythm.onrender.com'
+    : 'http://localhost:8000')
+
 
 export default function VideoProcessor() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
