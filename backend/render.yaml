@@ -9,6 +9,6 @@ services:
     plan: starter
     envVars:
       - key: PYTHON_VERSION
-        value: "3.11"
+        value: "3.11.10"
       - key: PYTHONPATH
         value: "/opt/render/project/src"
