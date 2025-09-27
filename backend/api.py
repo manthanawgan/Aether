@@ -24,7 +24,7 @@ app.add_middleware(
         "https://aether-e3xe.onrender.com",
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "DELETE", "OPTIONS"],
+    allow_methods=["GET", "POST", "DELETE", "OPTIONS", "HEAD"],
     allow_headers=["*"]
 )
 
@@ -92,6 +92,7 @@ def stream_file_safe(file_path: Path, chunk_size: int = 8192):
         raise
 
 @app.get("/")
+@app.head("/")
 def health():
     return {"message": "API is running - Preview & Download mode"}
 
